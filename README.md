@@ -48,4 +48,4 @@ This project is in early development. Feel free to open issues with suggestions 
 
 ## License
 
-[License information will be added]
+[License information will be added, is open source, but don't know yet how that is done best, lol]
