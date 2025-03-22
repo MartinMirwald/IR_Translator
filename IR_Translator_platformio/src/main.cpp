@@ -41,7 +41,7 @@ void setup() {
   
   #if DEBUG
   // Initialize serial on PA1 for FTDI adapter
-  pinMode(SERIAL_PIN, OUTPUT);
+  //pinMode(SERIAL_PIN, OUTPUT);
   Serial1.begin(9600);
   DEBUG_PRINTLN(F("Debug mode enabled"));
   DEBUG_PRINTLN(F("IR Translator starting..."));
