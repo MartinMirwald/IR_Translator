@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <tinyNeoPixel.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h> // Include for PROGMEM
 
 #define LED_PIN PIN_PA7
 #define BUTTON_PIN PIN_PA6
@@ -9,7 +10,6 @@
 #define NUMPIXELS 1
 
 // Function declarations
-void changeColor();
 void buttonISR();
 void sendIRSignal();
 void checkIRReceiver();
@@ -20,6 +20,16 @@ volatile bool buttonPressed = false;
 bool irSignalReceived = false;
 unsigned long lastIRCheck = 0;
 const unsigned long IR_CHECK_INTERVAL = 100; // Check IR every 100ms
+
+// Store rainbow colors in PROGMEM to save RAM
+const uint32_t rainbowColors[] PROGMEM = {
+  0x320000, // Red
+  0x321900, // Orange
+  0x323200, // Yellow
+  0x003200, // Green
+  0x000032, // Blue
+  0x1E0032  // Purple
+};
 
 void setup() {
   pixels.begin();
@@ -32,14 +42,27 @@ void setup() {
   // Enable interrupt on PA6 (falling edge = button press)
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
 
-  changeColor();
+  // Set initial color
+  uint8_t r = random(0, 51);
+  uint8_t g = random(0, 51);
+  uint8_t b = random(0, 51);
+  pixels.setPixelColor(0, pixels.Color(r, g, b));
+  pixels.show();
+
+  // Initialize Serial communication on PA1 (TX)
+  Serial.begin(9600); // Set baud rate to 9600
+  while (!Serial);    // Wait for Serial to initialize (optional)
 }
 
 void loop() {
   // Check for button press
   if (buttonPressed) {
     buttonPressed = false;
-    changeColor();
+    uint8_t r = random(0, 51);
+    uint8_t g = random(0, 51);
+    uint8_t b = random(0, 51);
+    pixels.setPixelColor(0, pixels.Color(r, g, b));
+    pixels.show();
     sendIRSignal(); // Send IR signal when button is pressed
   }
   
@@ -51,31 +74,19 @@ void loop() {
 
   // If IR signal was received, display a rainbow effect
   if (irSignalReceived) {
+    Serial.println(F("1"));
     rainbowEffect();
     irSignalReceived = false;
   }
-
-  //delay(10); // Small delay
 }
 
-void changeColor() {
-  uint8_t r = random(0, 51);
-  uint8_t g = random(0, 51);
-  uint8_t b = random(0, 51);
-  pixels.setPixelColor(0, pixels.Color(r, g, b));
-  pixels.show();
-}
-
-// Interrupt Service Routine (ISR)
 void buttonISR() {
   buttonPressed = true;
 }
 
-// Send a simple IR signal pattern
 void sendIRSignal() {
   // Simple modulated IR signal (38kHz carrier)
   for (int i = 0; i < 20; i++) {
-    // 38kHz carrier (13µs on, 13µs off)
     for (int j = 0; j < 10; j++) {
       digitalWrite(IR_LED_PIN, HIGH);
       delayMicroseconds(13);
@@ -86,11 +97,8 @@ void sendIRSignal() {
   }
 }
 
-// Check if IR signal is detected
 void checkIRReceiver() {
-  // Simple IR detection (low signal indicates received IR light)
   if (digitalRead(IR_RECEIVER_PIN) == LOW) {
-    // Debounce/verify it's a real signal
     delay(5);
     if (digitalRead(IR_RECEIVER_PIN) == LOW) {
       irSignalReceived = true;
@@ -98,20 +106,10 @@ void checkIRReceiver() {
   }
 }
 
-// Rainbow color effect when IR is detected
 void rainbowEffect() {
-  // Display a sequence of colors like a mini rainbow
-  uint32_t colors[] = {
-    pixels.Color(50, 0, 0),   // Red
-    pixels.Color(50, 25, 0),  // Orange
-    pixels.Color(50, 50, 0),  // Yellow
-    pixels.Color(0, 50, 0),   // Green
-    pixels.Color(0, 0, 50),   // Blue
-    pixels.Color(30, 0, 50)   // Purple
-  };
-  
   for (int i = 0; i < 6; i++) {
-    pixels.setPixelColor(0, colors[i]);
+    uint32_t color = pgm_read_dword(&rainbowColors[i]); // Read color from PROGMEM
+    pixels.setPixelColor(0, color);
     pixels.show();
     delay(100);
   }
