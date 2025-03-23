@@ -13,23 +13,12 @@
 void buttonISR();
 void sendIRSignal();
 void checkIRReceiver();
-void rainbowEffect();
 
 tinyNeoPixel pixels = tinyNeoPixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 volatile bool buttonPressed = false;
 bool irSignalReceived = false;
 unsigned long lastIRCheck = 0;
 const unsigned long IR_CHECK_INTERVAL = 100; // Check IR every 100ms
-
-// Store rainbow colors in PROGMEM to save RAM
-const uint32_t rainbowColors[] PROGMEM = {
-  0x320000, // Red
-  0x321900, // Orange
-  0x323200, // Yellow
-  0x003200, // Green
-  0x000032, // Blue
-  0x1E0032  // Purple
-};
 
 void setup() {
   pixels.begin();
@@ -58,11 +47,12 @@ void loop() {
   // Check for button press
   if (buttonPressed) {
     buttonPressed = false;
-    uint8_t r = random(0, 51);
-    uint8_t g = random(0, 51);
-    uint8_t b = random(0, 51);
-    pixels.setPixelColor(0, pixels.Color(r, g, b));
+    Serial.println(F("Button pressed")); // Log button press
+
+    // Set LED to green
+    pixels.setPixelColor(0, pixels.Color(0, 50, 0));
     pixels.show();
+
     sendIRSignal(); // Send IR signal when button is pressed
   }
   
@@ -72,10 +62,11 @@ void loop() {
     lastIRCheck = millis();
   }
 
-  // If IR signal was received, display a rainbow effect
+  // If IR signal was received, set LED to red
   if (irSignalReceived) {
     Serial.println(F("1"));
-    rainbowEffect();
+    pixels.setPixelColor(0, pixels.Color(50, 0, 0)); // Set LED to red
+    pixels.show();
     irSignalReceived = false;
   }
 }
@@ -103,14 +94,5 @@ void checkIRReceiver() {
     if (digitalRead(IR_RECEIVER_PIN) == LOW) {
       irSignalReceived = true;
     }
-  }
-}
-
-void rainbowEffect() {
-  for (int i = 0; i < 6; i++) {
-    uint32_t color = pgm_read_dword(&rainbowColors[i]); // Read color from PROGMEM
-    pixels.setPixelColor(0, color);
-    pixels.show();
-    delay(100);
   }
 }
