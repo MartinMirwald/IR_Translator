@@ -9,6 +9,9 @@
 #define IR_RECEIVER_PIN PIN_PA2
 #define NUMPIXELS 1
 
+
+
+
 // Function declarations
 void buttonISR();
 void sendIRSignal();
@@ -47,7 +50,7 @@ void loop() {
   // Check for button press
   if (buttonPressed) {
     buttonPressed = false;
-    Serial.println(F("Button pressed")); // Log button press
+    Serial.println(F("1")); // Log button press
 
     // Set LED to green
     pixels.setPixelColor(0, pixels.Color(0, 50, 0));
